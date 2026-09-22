@@ -20,6 +20,22 @@
             "time": "01:50 PM",
             "price": 550,
             "status": "منتهية"
+        },
+        {
+            "origin": "سطيف",
+            "destination": "العلمة",
+            "distance": "45.0 كم",
+            "price_val": 1500,
+            "price": "1500 DA",
+            "year": "2026",
+            "month": "06",
+            "day": "20",
+            "period": "مساءً (PM)",
+            "hour": "07",
+            "minute": "50"
         }
-    ]
+    ],
+    "earnings": {
+        "2026-06-20": 1500
+    }
 }
