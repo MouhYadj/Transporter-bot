@@ -1,35 +1,4 @@
 {
     "logged_in": true,
-    "trips": [
-        {
-            "id": 7,
-            "origin": "سطيف",
-            "destination": "عين ولمان",
-            "distance": 35.0,
-            "date": "2026-09-23",
-            "time": "01:30 AM",
-            "price": 1100,
-            "status": "منتهية"
-        },
-        {
-            "id": 2,
-            "origin": "سطيف",
-            "destination": "عين ولمان",
-            "distance": 35.0,
-            "date": "2026-09-23",
-            "time": "07:50 PM",
-            "price": 1100,
-            "status": "منتهية"
-        },
-        {
-            "id": 3,
-            "origin": "سطيف",
-            "destination": "عين ولمان",
-            "distance": 35.0,
-            "date": "2027-10-26",
-            "time": "08:10 AM",
-            "price": 1100,
-            "status": "منتهية"
-        }
-    ]
+    "trips": []
 }
