@@ -6,7 +6,6 @@ from flask import Flask
 from threading import Thread
 import telebot
 
-# إعدادات بوت تلغرام بالتوكن الجديد
 TOKEN = '8831603087:AAGwmhlHEsGKo1Dg7xlifL2AS5AKJpzufVA'
 bot = telebot.TeleBot(TOKEN)
 
@@ -137,11 +136,11 @@ def go_home(message):
     user_temp_trip.pop(message.chat.id, None)
     send_welcome(message)
 
-# --- إنشاء رحلة جديدة باستخدام الأزرار الشفافة داخل المحادثة ---
+# --- إنشاء رحلة جديدة ---
 @bot.message_handler(func=lambda message: message.text == "📦 إنشاء رحلة جديدة")
 def create_trip_start(message):
     if user_states.get(message.chat.id) != "logged_in":
-        bot.send_message(message.chat.id, "الرجاء تسجيل الدخول أولاً.")
+        bot.send_message(message.chat.id, "الرجاء تسجيل الدخول أولاً من واجهة الناقل.")
         return
     
     markup = telebot.types.InlineKeyboardMarkup()
@@ -155,7 +154,7 @@ def create_trip_start(message):
     )
     markup.add(telebot.types.InlineKeyboardButton("✍️ كتابة مكان آخر", callback_data="orig_custom"))
     
-    bot.send_message(message.chat.id, "📍 اختر مكان الانطلاق من أزرار المحادثة بالأسفل أو اقطبه:", reply_markup=markup)
+    bot.send_message(message.chat.id, "📍 اختر مكان الانطلاق:", reply_markup=markup)
     user_states[message.chat.id] = "choosing_origin_inline"
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith("orig_"))
@@ -232,7 +231,7 @@ def callback_distance(call):
     if val == "50":
         process_distance(chat_id, 50.0)
     else:
-        bot.send_message(chat_id, "✍️ الرجاء كتابة المسافة بالأرقام فقط (مثال: 15 أو 22):")
+        bot.send_message(chat_id, "✍️ الرجاء كتابة المسافة بالأرقام فقط:")
         user_states[chat_id] = "choosing_distance_text"
     bot.answer_callback_query(call.id)
 
@@ -250,7 +249,6 @@ def process_distance(chat_id, distance_val):
     user_temp_trip[chat_id]["price_val"] = price
     user_temp_trip[chat_id]["price"] = f"{price} DA"
     
-    # حفظ تلقائي للرحلة
     trip = user_temp_trip[chat_id]
     now = datetime.now()
     trip["year"] = str(now.year)
@@ -265,11 +263,11 @@ def process_distance(chat_id, distance_val):
     user_states[chat_id] = "logged_in"
     user_temp_trip.pop(chat_id, None)
 
-# --- عرض الرحلات (إنهاء أخضر / حذف أحمر) ---
+# --- عرض وإدارة الرحلات ---
 @bot.message_handler(func=lambda message: message.text == "📋 الرحلات المتوفرة")
 def show_trips(message):
     if user_states.get(message.chat.id) != "logged_in":
-        bot.send_message(message.chat.id, "الرجاء تسجيل الدخول أولاً.")
+        bot.send_message(message.chat.id, "الرجاء تسجيل الدخول أولاً من واجهة الناقل.")
         return
         
     data = load_data()
@@ -288,7 +286,6 @@ def show_trips(message):
         )
     
     bot.send_message(message.chat.id, text, reply_markup=markup)
-    user_states[message.chat.id] = "managing_trips"
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith("trip_"))
 def callback_trip_action(call):
@@ -310,19 +307,20 @@ def callback_trip_action(call):
             price_val = trip.get("price_val", 0)
             data["earnings"][date_key] = current_earning + price_val
             save_data(data)
-            bot.send_message(chat_id, f"🟩 تم إنهاء الرحلة رقم {idx + 1} بنجاح وإضافتها للأرباح اليومية!")
+            bot.send_message(chat_id, f"🟩 تم إنهاء الرحلة رقم {idx + 1} وإضافتها للأرباح اليومية!")
         else:
             save_data(data)
-            bot.send_message(chat_id, f"🟥 تم حذف الرحلة رقم {idx + 1} مباشرة دون إضافتها للأرباح.")
+            bot.send_message(chat_id, f"🟥 تم حذف الرحلة رقم {idx + 1} دون إضافتها للأرباح.")
     else:
         bot.send_message(chat_id, "❌ هذه الرحلة غير موجودة أو تم حذفها مسبقاً.")
     bot.answer_callback_query(call.id)
     show_trips(call.message)
 
-# --- إدارة الأرباح اليومية ---
+# --- إدارة الأرباح اليومية (مع طلب الرقم السري عند الحذف) ---
 @bot.message_handler(func=lambda message: message.text == "💰 الأرباح اليومية")
 def show_daily_earnings(message):
     if user_states.get(message.chat.id) != "logged_in":
+        bot.send_message(message.chat.id, "الرجاء تسجيل الدخول أولاً من واجهة الناقل.")
         return
     data = load_data()
     earnings = data.get("earnings", {})
@@ -339,20 +337,31 @@ def show_daily_earnings(message):
     bot.send_message(message.chat.id, text, reply_markup=markup)
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith("earn_del_"))
-def callback_delete_earning(call):
+def callback_delete_earning_prompt(call):
     chat_id = call.message.chat.id
     target_date = call.data.replace("earn_del_", "")
-    
-    data = load_data()
-    if target_date in data.get("earnings", {}):
-        data["earnings"].pop(target_date)
-        save_data(data)
-        bot.send_message(chat_id, f"✅ تم حذف أرباح يوم {target_date} بنجاح.")
-    else:
-        bot.send_message(chat_id, "❌ التاريخ غير موجود.")
+    user_states[chat_id] = f"confirm_del_earn_{target_date}"
+    bot.send_message(chat_id, f"🔒 لحذف أرباح يوم {target_date}، يجِب إدخال الرقم السري في المحادثة:")
     bot.answer_callback_query(call.id)
-    show_daily_earnings(call.message)
 
+@bot.message_handler(func=lambda message: user_states.get(message.chat.id, "").startswith("confirm_del_earn_"))
+def execute_delete_earning(message):
+    chat_id = message.chat.id
+    if message.text == "010203":
+        target_date = user_states[chat_id].replace("confirm_del_earn_", "")
+        data = load_data()
+        if target_date in data.get("earnings", {}):
+            data["earnings"].pop(target_date)
+            save_data(data)
+            bot.send_message(chat_id, f"✅ تم حذف أرباح يوم {target_date} بنجاح بعد التحقق من الرقم السري.", reply_markup=get_driver_markup())
+        else:
+            bot.send_message(chat_id, "❌ التاريخ غير موجود.", reply_markup=get_driver_markup())
+        user_states[chat_id] = "logged_in"
+    else:
+        bot.send_message(chat_id, "❌ الرقم السري خطأ. تم إلغاء عملية الحذف.")
+        user_states[chat_id] = "logged_in"
+
+# --- الأرباح الشهرية والسنوية ---
 @bot.message_handler(func=lambda message: message.text == "📊 الأرباح الشهرية")
 def show_monthly_earnings(message):
     if user_states.get(message.chat.id) != "logged_in":
@@ -400,14 +409,27 @@ def show_yearly_earnings(message):
         text += f"📊 سنة {year}: {amount} DA\n"
     bot.send_message(message.chat.id, text, reply_markup=get_driver_markup())
 
+# --- تصفير الأرباح اليومية (يطلب الرقم السري) ---
 @bot.message_handler(func=lambda message: message.text == "🗑️ تصفير الأرباح اليومية")
-def reset_earnings(message):
+def reset_earnings_prompt(message):
     if user_states.get(message.chat.id) != "logged_in":
+        bot.send_message(message.chat.id, "الرجاء تسجيل الدخول أولاً من واجهة الناقل.")
         return
-    data = load_data()
-    data["earnings"] = {}
-    save_data(data)
-    bot.send_message(message.chat.id, "🗑️ تم تصفير جميع الأرباح بنجاح.", reply_markup=get_driver_markup())
+    user_states[message.chat.id] = "confirm_reset_earnings"
+    bot.send_message(message.chat.id, "🔒 لتصفير جميع الأرباح اليومية، يرجى إدخال الرقم السري:")
+
+@bot.message_handler(func=lambda message: user_states.get(message.chat.id) == "confirm_reset_earnings")
+def execute_reset_earnings(message):
+    chat_id = message.chat.id
+    if message.text == "010203":
+        data = load_data()
+        data["earnings"] = {}
+        save_data(data)
+        bot.send_message(chat_id, "🗑️ تم تصفير جميع الأرباح اليومية بنجاح بعد التحقق من الرقم السري.", reply_markup=get_driver_markup())
+        user_states[chat_id] = "logged_in"
+    else:
+        bot.send_message(chat_id, "❌ الرقم السري غير صحيح. تم إلغاء عملية التصفير.", reply_markup=get_driver_markup())
+        user_states[chat_id] = "logged_in"
 
 app = Flask('')
 
