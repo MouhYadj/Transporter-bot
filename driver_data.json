@@ -1,6 +1,20 @@
 {
     "logged_in": true,
-    "trips": [],
+    "trips": [
+        {
+            "origin": "العلمة",
+            "destination": "العلمة",
+            "distance": "50.0 كم",
+            "price_val": 1800,
+            "price": "1800 DA",
+            "year": "2026",
+            "month": "05",
+            "day": "26",
+            "period": "مساءً (PM)",
+            "hour": "11",
+            "minute": "20"
+        }
+    ],
     "earnings": {
         "2026-06-20": 1500
     }
