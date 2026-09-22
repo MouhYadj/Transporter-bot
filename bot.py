@@ -5,6 +5,8 @@ import telebot
 from telebot import types
 import json
 import calendar
+import requests
+import base64
 
 # خادم الويب الوهمي لترضى منصة Render (Web Service)
 app = Flask('')
@@ -20,14 +22,78 @@ def keep_alive():
     t = Thread(target=run)
     t.start()
 
-# تشغيل السيرفر الوهمي في الخلفية
 keep_alive()
 
-# ضع هنا الرمز (Token) الخاص بالبوت
+# إعدادات بوت تيليجرام
 TOKEN='8362647244:AAES_D9iqy-X-Tc0_FlcRh8nSdmmjg5_JLM'
 bot = telebot.TeleBot(TOKEN)
 
-# جدول المسافات والأسعار المرجعي
+# إعدادات الاتصال بـ GitHub لحفظ البيانات بشكل دائم
+GITHUB_TOKEN = os.environ.get('GITHUB_TOKEN')
+GITHUB_REPO = os.environ.get('GITHUB_REPO') # مثال: MouhYadj/Transporter-bot
+DATA_FILE = 'driver_data.json'
+
+def load_data():
+    # محاولة جلب البيانات مباشرة من مستودع GitHub
+    if GITHUB_TOKEN and GITHUB_REPO:
+        try:
+            url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{DATA_FILE}"
+            headers = {"Authorization": f"token {GITHUB_TOKEN}"}
+            response = requests.get(url, headers=headers)
+            if response.status_code == 200:
+                file_info = response.json()
+                file_content = base64.b64decode(file_info['content']).decode('utf-8')
+                return json.loads(file_content)
+        except Exception as e:
+            print(f"Error loading from GitHub: {e}")
+            
+    # كاحتياطي محلي إن لم تتوفر إعدادات GitHub
+    if os.path.exists(DATA_FILE):
+        try:
+            with open(DATA_FILE, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except:
+            pass
+            
+    return {'logged_in': False, 'trips': []}
+
+def save_data():
+    # حفظ البيانات محلياً أولاً
+    try:
+        with open(DATA_FILE, 'w', encoding='utf-8') as f:
+            json.dump(driver_data, f, ensure_ascii=False, indent=4)
+    except Exception as e:
+        print(f"Error saving local data: {e}")
+
+    # رفع وتحديث الملف تلقائياً على GitHub لضمان عدم ضياعها أبداً
+    if GITHUB_TOKEN and GITHUB_REPO:
+        try:
+            url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{DATA_FILE}"
+            headers = {"Authorization": f"token {GITHUB_TOKEN}"}
+            
+            # جلب الـ SHA الخاص بالملف الحالي على جيت هاب (مطلوب لعمل التحديث)
+            get_resp = requests.get(url, headers=headers)
+            sha = get_resp.json().get('sha') if get_resp.status_code == 200 else None
+            
+            # تجهيز محتوى البيانات الجديد وترميزه
+            json_str = json.dumps(driver_data, ensure_ascii=False, indent=4)
+            encoded_content = base64.b64encode(json_str.encode('utf-8')).decode('utf-8')
+            
+            data_payload = {
+                "message": "Update driver data automatically",
+                "content": encoded_content,
+            }
+            if sha:
+                data_payload["sha"] = sha
+                
+            requests.put(url, headers=headers, json=data_payload)
+        except Exception as e:
+            print(f"Error saving to GitHub: {e}")
+
+driver_data = load_data()
+user_states = {}
+temp_driver_trip = {}
+
 distance_table = {
     "اوريسيا": 15,
     "عين أرنات": 12,
@@ -39,27 +105,6 @@ distance_table = {
 }
 
 POPULAR_PLACES = ["سطيف", "العلمة", "اوريسيا", "عين ولمان", "بوعنداس"]
-DATA_FILE = 'driver_data.json'
-
-def load_data():
-    if os.path.exists(DATA_FILE):
-        try:
-            with open(DATA_FILE, 'r', encoding='utf-8') as f:
-                return json.load(f)
-        except:
-            pass
-    return {'logged_in': False, 'trips': []}
-
-def save_data():
-    try:
-        with open(DATA_FILE, 'w', encoding='utf-8') as f:
-            json.dump(driver_data, f, ensure_ascii=False, indent=4)
-    except Exception as e:
-        print(f"Error saving data: {e}")
-
-driver_data = load_data()
-user_states = {}
-temp_driver_trip = {}
 
 def calculate_price(d):
     if d < 2: return 200
@@ -527,7 +572,7 @@ def finalize_trip_creation(chat_id):
         'id': len(driver_data['trips']) + 1,
         'origin': trip_info['origin'],
         'destination': trip_info['destination'],
-        'distance': dist,
+        "distance": dist,
         'date': trip_info['date'],
         'time': trip_info['time'],
         'price': price,
