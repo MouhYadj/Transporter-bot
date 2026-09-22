@@ -13,19 +13,6 @@
             "period": "مساءً (PM)",
             "hour": "07",
             "minute": "50"
-        },
-        {
-            "origin": "سطيف",
-            "destination": "سطيف",
-            "distance": "20.0 كم",
-            "price_val": 650,
-            "price": "650 DA",
-            "year": "2026",
-            "month": "05",
-            "day": "20",
-            "period": "مساءً (PM)",
-            "hour": "01",
-            "minute": "50"
         }
     ],
     "earnings": {
