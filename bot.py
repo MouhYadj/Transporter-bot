@@ -25,16 +25,15 @@ def keep_alive():
 keep_alive()
 
 # إعدادات بوت تيليجرام
-TOKEN='8362647244:AAES_D9iqy-X-Tc0_FlcRh8nSdmmjg5_JLM'
+TOKEN = '8362647244:AAES_D9iqy-X-Tc0_FlcRh8nSdmmjg5_JLM'
 bot = telebot.TeleBot(TOKEN)
 
 # إعدادات الاتصال بـ GitHub لحفظ البيانات بشكل دائم
 GITHUB_TOKEN = os.environ.get('GITHUB_TOKEN')
-GITHUB_REPO = os.environ.get('GITHUB_REPO') # مثال: MouhYadj/Transporter-bot
+GITHUB_REPO = os.environ.get('GITHUB_REPO')
 DATA_FILE = 'driver_data.json'
 
 def load_data():
-    # محاولة جلب البيانات مباشرة من مستودع GitHub
     if GITHUB_TOKEN and GITHUB_REPO:
         try:
             url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{DATA_FILE}"
@@ -47,7 +46,6 @@ def load_data():
         except Exception as e:
             print(f"Error loading from GitHub: {e}")
             
-    # كاحتياطي محلي إن لم تتوفر إعدادات GitHub
     if os.path.exists(DATA_FILE):
         try:
             with open(DATA_FILE, 'r', encoding='utf-8') as f:
@@ -58,24 +56,20 @@ def load_data():
     return {'logged_in': False, 'trips': []}
 
 def save_data():
-    # حفظ البيانات محلياً أولاً
     try:
         with open(DATA_FILE, 'w', encoding='utf-8') as f:
             json.dump(driver_data, f, ensure_ascii=False, indent=4)
     except Exception as e:
         print(f"Error saving local data: {e}")
 
-    # رفع وتحديث الملف تلقائياً على GitHub لضمان عدم ضياعها أبداً
     if GITHUB_TOKEN and GITHUB_REPO:
         try:
             url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{DATA_FILE}"
             headers = {"Authorization": f"token {GITHUB_TOKEN}"}
             
-            # جلب الـ SHA الخاص بالملف الحالي على جيت هاب (مطلوب لعمل التحديث)
             get_resp = requests.get(url, headers=headers)
             sha = get_resp.json().get('sha') if get_resp.status_code == 200 else None
             
-            # تجهيز محتوى البيانات الجديد وترميزه
             json_str = json.dumps(driver_data, ensure_ascii=False, indent=4)
             encoded_content = base64.b64encode(json_str.encode('utf-8')).decode('utf-8')
             
@@ -276,8 +270,12 @@ def handle_messages(message):
                     daily_totals[day] = []
                 daily_totals[day].append(t)
             
-            response_text = "📊 **تفاصيل الأرباح اليومية:**\n\n"
-            for day, trips in daily_totals.items():
+            # ترتيب الأيام تصاعدياً زمنياً
+            sorted_days = sorted(daily_totals.keys())
+            
+            response_text = "📊 **تفاصيل الأرباح اليومية (مرتبة تنابعاً):**\n\n"
+            for day in sorted_days:
+                trips = daily_totals[day]
                 day_total = sum(trip['price'] for trip in trips)
                 response_text += f"📅 **اليوم:** {day}\n"
                 response_text += f"💰 **المجموع اليومي:** {day_total} DA\n"
@@ -302,12 +300,18 @@ def handle_messages(message):
                 day = t['date']
                 monthly_data[month_key]['days'][day] = monthly_data[month_key]['days'].get(day, 0) + t['price']
 
-            response_text = "📈 **ملخص الأرباح الشهرية (لكل شهر على حدة):**\n\n"
-            for m_key, m_val in monthly_data.items():
+            # ترتيب الشهور والأيام تصاعدياً
+            sorted_months = sorted(monthly_data.keys())
+
+            response_text = "📈 **ملخص الأرباح الشهرية (ترتيب زمني):**\n\n"
+            for m_key in sorted_months:
+                m_val = monthly_data[m_key]
                 response_text += f"🗓️ **شهر ({m_key}):**\n"
                 response_text += f"💰 **مجموع أرباح الشهر:** **{m_val['total']} DA**\n"
                 response_text += "📅 **التفاصيل حسب الأيام:**\n"
-                for day, d_total in m_val['days'].items():
+                sorted_days_in_month = sorted(m_val['days'].keys())
+                for day in sorted_days_in_month:
+                    d_total = m_val['days'][day]
                     response_text += f"  • يوم {day}: {d_total} DA\n"
                 response_text += "\n" + "═"*20 + "\n\n"
             
@@ -323,8 +327,12 @@ def handle_messages(message):
                 year_key = t['date'][:4]
                 yearly_data[year_key] = yearly_data.get(year_key, 0) + t['price']
 
-            response_text = "💰 **ملخص الأرباح السنوية:**\n\n"
-            for y_key, y_total in yearly_data.items():
+            # ترتيب السنوات تصاعدياً (مثلاً 2025 ثم 2026 ثم 2027)
+            sorted_years = sorted(yearly_data.keys())
+
+            response_text = "💰 **ملخص الأرباح السنوية (ترتيب تصاعدي):**\n\n"
+            for y_key in sorted_years:
+                y_total = yearly_data[y_key]
                 response_text += f"📅 سنة **{y_key}**: **{y_total} DA**\n"
             
             bot.send_message(chat_id, response_text, parse_mode="Markdown")
@@ -572,7 +580,7 @@ def finalize_trip_creation(chat_id):
         'id': len(driver_data['trips']) + 1,
         'origin': trip_info['origin'],
         'destination': trip_info['destination'],
-        "distance": dist,
+        'distance': dist,
         'date': trip_info['date'],
         'time': trip_info['time'],
         'price': price,
