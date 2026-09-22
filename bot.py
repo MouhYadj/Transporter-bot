@@ -139,6 +139,7 @@ def command_start(message):
 
 @bot.message_handler(func=lambda message: True)
 def handle_messages(message):
+    global driver_data
     chat_id = message.chat.id
     text = message.text
 
@@ -181,6 +182,7 @@ def handle_messages(message):
     elif user_states.get(chat_id) == 'waiting_for_password':
         if text.strip() == '010203':
             user_states[chat_id] = None
+            driver_data = load_data() # تحديث البيانات عند الدخول
             driver_data['logged_in'] = True
             save_data()
             show_driver_menu(chat_id)
@@ -246,6 +248,7 @@ def handle_messages(message):
             bot.send_message(chat_id, "❌ الرجاء إدخال رقم صحيح للمسافة.")
 
     elif text == '📋 الرحلات المتوفرة':
+        driver_data = load_data() # تحديث البيانات من جيت هاب قبل العرض
         active_trips = [t for t in driver_data['trips'] if t['status'] == 'غير منتهية']
         if not active_trips:
             bot.send_message(chat_id, "ℹ️ لا توجد رحلات غير منتهية حالياً.")
@@ -259,6 +262,7 @@ def handle_messages(message):
             bot.send_message(chat_id, "📦 **الرحلات غير المنتهية:**", reply_markup=markup, parse_mode="Markdown")
 
     elif text == '📊 الأرباح اليومية':
+        driver_data = load_data() # تحديث البيانات من جيت هاب قبل العرض
         finished_trips = [t for t in driver_data['trips'] if t['status'] == 'منتهية']
         if not finished_trips:
             bot.send_message(chat_id, "ℹ️ لا توجد أرباح مسجلة من رحلات منتهية بعد.")
@@ -270,10 +274,9 @@ def handle_messages(message):
                     daily_totals[day] = []
                 daily_totals[day].append(t)
             
-            # ترتيب الأيام تصاعدياً زمنياً
             sorted_days = sorted(daily_totals.keys())
             
-            response_text = "📊 **تفاصيل الأرباح اليومية (مرتبة تنابعاً):**\n\n"
+            response_text = "📊 **تفاصيل الأرباح اليومية (ترتيب زمني):**\n\n"
             for day in sorted_days:
                 trips = daily_totals[day]
                 day_total = sum(trip['price'] for trip in trips)
@@ -286,6 +289,7 @@ def handle_messages(message):
             bot.send_message(chat_id, response_text, parse_mode="Markdown")
 
     elif text == '📈 الأرباح الشهرية':
+        driver_data = load_data() # تحديث البيانات من جيت هاب قبل العرض
         finished_trips = [t for t in driver_data['trips'] if t['status'] == 'منتهية']
         if not finished_trips:
             bot.send_message(chat_id, "ℹ️ لا توجد أرباح مسجلة للشهور بعد.")
@@ -300,7 +304,6 @@ def handle_messages(message):
                 day = t['date']
                 monthly_data[month_key]['days'][day] = monthly_data[month_key]['days'].get(day, 0) + t['price']
 
-            # ترتيب الشهور والأيام تصاعدياً
             sorted_months = sorted(monthly_data.keys())
 
             response_text = "📈 **ملخص الأرباح الشهرية (ترتيب زمني):**\n\n"
@@ -318,6 +321,7 @@ def handle_messages(message):
             bot.send_message(chat_id, response_text, parse_mode="Markdown")
 
     elif text == '💰 الأرباح السنوية':
+        driver_data = load_data() # تحديث البيانات من جيت هاب قبل العرض
         finished_trips = [t for t in driver_data['trips'] if t['status'] == 'منتهية']
         if not finished_trips:
             bot.send_message(chat_id, "ℹ️ لا توجد أرباح مسجلة للسنوات بعد.")
@@ -327,7 +331,6 @@ def handle_messages(message):
                 year_key = t['date'][:4]
                 yearly_data[year_key] = yearly_data.get(year_key, 0) + t['price']
 
-            # ترتيب السنوات تصاعدياً (مثلاً 2025 ثم 2026 ثم 2027)
             sorted_years = sorted(yearly_data.keys())
 
             response_text = "💰 **ملخص الأرباح السنوية (ترتيب تصاعدي):**\n\n"
@@ -453,6 +456,7 @@ def prompt_minute_selection(chat_id, hour):
 
 @bot.callback_query_handler(func=lambda call: True)
 def callback_query(call):
+    global driver_data
     chat_id = call.message.chat.id
     data = call.data
     
@@ -533,6 +537,7 @@ def callback_query(call):
         finalize_trip_creation(chat_id)
 
     elif data.startswith('finish_') or data.startswith('delete_'):
+        driver_data = load_data() # تحديث البيانات من جيت هاب قبل التعديل
         parts = data.split('_')
         action = parts[0]
         trip_id = int(parts[1])
@@ -569,6 +574,8 @@ def callback_query(call):
             )
 
 def finalize_trip_creation(chat_id):
+    global driver_data
+    driver_data = load_data() # تحديث البيانات قبل الإضافة لضمان عدم الكتابة فوق بيانات قديمة
     trip_info = temp_driver_trip.get(chat_id)
     if not trip_info:
         return
