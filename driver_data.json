@@ -10,6 +10,19 @@
             "year": "2026",
             "month": "09",
             "day": "22"
+        },
+        {
+            "origin": "سطيف",
+            "destination": "العلمة",
+            "distance": "50.0 كم",
+            "price_val": 1800,
+            "price": "1800 DA",
+            "year": "2026",
+            "month": "12",
+            "day": "30",
+            "period": "مساءً (PM)",
+            "hour": "08",
+            "minute": "45"
         }
     ],
     "earnings": {}
