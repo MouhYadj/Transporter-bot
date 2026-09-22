@@ -182,7 +182,7 @@ def handle_messages(message):
     elif user_states.get(chat_id) == 'waiting_for_password':
         if text.strip() == '010203':
             user_states[chat_id] = None
-            driver_data = load_data() # تحديث البيانات عند الدخول
+            driver_data = load_data()
             driver_data['logged_in'] = True
             save_data()
             show_driver_menu(chat_id)
@@ -248,7 +248,7 @@ def handle_messages(message):
             bot.send_message(chat_id, "❌ الرجاء إدخال رقم صحيح للمسافة.")
 
     elif text == '📋 الرحلات المتوفرة':
-        driver_data = load_data() # تحديث البيانات من جيت هاب قبل العرض
+        driver_data = load_data()
         active_trips = [t for t in driver_data['trips'] if t['status'] == 'غير منتهية']
         if not active_trips:
             bot.send_message(chat_id, "ℹ️ لا توجد رحلات غير منتهية حالياً.")
@@ -262,7 +262,7 @@ def handle_messages(message):
             bot.send_message(chat_id, "📦 **الرحلات غير المنتهية:**", reply_markup=markup, parse_mode="Markdown")
 
     elif text == '📊 الأرباح اليومية':
-        driver_data = load_data() # تحديث البيانات من جيت هاب قبل العرض
+        driver_data = load_data()
         finished_trips = [t for t in driver_data['trips'] if t['status'] == 'منتهية']
         if not finished_trips:
             bot.send_message(chat_id, "ℹ️ لا توجد أرباح مسجلة من رحلات منتهية بعد.")
@@ -289,7 +289,7 @@ def handle_messages(message):
             bot.send_message(chat_id, response_text, parse_mode="Markdown")
 
     elif text == '📈 الأرباح الشهرية':
-        driver_data = load_data() # تحديث البيانات من جيت هاب قبل العرض
+        driver_data = load_data()
         finished_trips = [t for t in driver_data['trips'] if t['status'] == 'منتهية']
         if not finished_trips:
             bot.send_message(chat_id, "ℹ️ لا توجد أرباح مسجلة للشهور بعد.")
@@ -321,7 +321,7 @@ def handle_messages(message):
             bot.send_message(chat_id, response_text, parse_mode="Markdown")
 
     elif text == '💰 الأرباح السنوية':
-        driver_data = load_data() # تحديث البيانات من جيت هاب قبل العرض
+        driver_data = load_data()
         finished_trips = [t for t in driver_data['trips'] if t['status'] == 'منتهية']
         if not finished_trips:
             bot.send_message(chat_id, "ℹ️ لا توجد أرباح مسجلة للسنوات بعد.")
@@ -537,7 +537,7 @@ def callback_query(call):
         finalize_trip_creation(chat_id)
 
     elif data.startswith('finish_') or data.startswith('delete_'):
-        driver_data = load_data() # تحديث البيانات من جيت هاب قبل التعديل
+        driver_data = load_data()
         parts = data.split('_')
         action = parts[0]
         trip_id = int(parts[1])
@@ -575,7 +575,7 @@ def callback_query(call):
 
 def finalize_trip_creation(chat_id):
     global driver_data
-    driver_data = load_data() # تحديث البيانات قبل الإضافة لضمان عدم الكتابة فوق بيانات قديمة
+    driver_data = load_data()
     trip_info = temp_driver_trip.get(chat_id)
     if not trip_info:
         return
@@ -634,6 +634,12 @@ def show_driver_menu(chat_id):
         reply_markup=markup,
         parse_mode="Markdown"
     )
+
+# إلغاء أي Webhook قديم لتفادي خطأ 409 وتضارب الاتصال بشكل نهائي
+try:
+    bot.remove_webhook()
+except Exception as e:
+    print(f"Error removing webhook: {e}")
 
 print("البوت يعمل الآن...")
 bot.infinity_polling()
