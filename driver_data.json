@@ -2,66 +2,6 @@
     "logged_in": true,
     "trips": [
         {
-            "id": 1,
-            "origin": "سطيف",
-            "destination": "بوعنداس",
-            "distance": 50.0,
-            "date": "2027-01-25",
-            "time": "08:50 PM",
-            "price": 1700,
-            "status": "منتهية"
-        },
-        {
-            "id": 2,
-            "origin": "سطيف",
-            "destination": "عين ولمان",
-            "distance": 35.0,
-            "date": "2026-09-25",
-            "time": "07:50 PM",
-            "price": 1100,
-            "status": "منتهية"
-        },
-        {
-            "id": 3,
-            "origin": "سطيف",
-            "destination": "عين ولمان",
-            "distance": 35.0,
-            "date": "2026-09-26",
-            "time": "06:10 PM",
-            "price": 1100,
-            "status": "منتهية"
-        },
-        {
-            "id": 4,
-            "origin": "سطيف",
-            "destination": "سطيف",
-            "distance": 5.0,
-            "date": "2025-09-28",
-            "time": "08:50 PM",
-            "price": 300,
-            "status": "منتهية"
-        },
-        {
-            "id": 5,
-            "origin": "سطيف",
-            "destination": "بوعنداس",
-            "distance": 50.0,
-            "date": "2026-09-27",
-            "time": "07:50 PM",
-            "price": 1700,
-            "status": "منتهية"
-        },
-        {
-            "id": 6,
-            "origin": "سطيف",
-            "destination": "بوعنداس",
-            "distance": 50.0,
-            "date": "2026-09-26",
-            "time": "07:50 PM",
-            "price": 1700,
-            "status": "منتهية"
-        },
-        {
             "id": 7,
             "origin": "سطيف",
             "destination": "عين ولمان",
