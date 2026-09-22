@@ -98,7 +98,6 @@ def calculate_price(km):
     else:
         return 1100 + int((km - 36) / 2) * 100
 
-# تخزين الحالات المؤقتة للمستخدمين
 user_states = {}
 user_temp_trip = {}
 
@@ -242,18 +241,9 @@ def set_minute(message):
     
     data = load_data()
     data["trips"].append(trip)
-    
-    date_key = f"{trip['year']}-{trip['month']}-{trip['day']}"
-    if "earnings" not in data:
-        data["earnings"] = {}
-    
-    current_earning = data["earnings"].get(date_key, 0)
-    price_val = trip.get("price_val", 0)
-    data["earnings"][date_key] = current_earning + price_val
-    
     save_data(data)
     
-    bot.send_message(message.chat.id, f"✅ تم إنشاء الرحلة بنجاح!\n- المسار: من {trip['origin']} إلى {trip['destination']}\n- المسافة: {trip['distance']}\n- السعر: {trip['price']}")
+    bot.send_message(message.chat.id, f"✅ تم حفظ الرحلة بنجاح (كمسودة/منتظرة):\n- من {trip['origin']} إلى {trip['destination']}\n- السعر المقدر: {trip['price']}\n\nيمكنك إتمامها أو حذفها من قائمة الرحلات المتوفرة.")
     user_states[message.chat.id] = "logged_in"
     user_temp_trip.pop(message.chat.id, None)
     show_driver_menu(message.chat.id)
@@ -268,35 +258,47 @@ def show_trips(message):
     
     markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
     for idx, trip in enumerate(trips, 1):
-        markup.add(f"❌ إنهاء/حذف الرحلة {idx}")
+        markup.add(f"🟩 إنهاء الرحلة {idx}", f"🟥 حذف الرحلة {idx}")
     markup.add("🏠 الرئيسية")
     
-    text = "📋 قائمة الرحلات المسجلة:\n"
+    text = "📋 قائمة الرحلات المتوفرة (اختر الإجراء من أسفل المحادثة):\n"
     for idx, trip in enumerate(trips, 1):
         text += f"{idx}. من {trip.get('origin')} إلى {trip.get('destination')} | المسافة: {trip.get('distance')} | السعر: {trip.get('price')}\n"
     
     bot.send_message(message.chat.id, text, reply_markup=markup)
     user_states[message.chat.id] = "managing_trips"
 
-@bot.message_handler(func=lambda message: user_states.get(message.chat.id) == "managing_trips" and message.text.startswith("❌ إنهاء/حذف الرحلة"))
-def delete_trip(message):
+@bot.message_handler(func=lambda message: user_states.get(message.chat.id) == "managing_trips" and (message.text.startswith("🟩 إنهاء الرحلة") or message.text.startswith("🟥 حذف الرحلة")))
+def handle_trip_action(message):
     try:
-        idx = int(message.text.split("الرحلة")[1].strip()) - 1
+        parts = message.text.split("الرحلة")
+        action = parts[0].strip()
+        idx = int(parts[1].strip()) - 1
+        
         data = load_data()
         trips = data.get("trips", [])
         if 0 <= idx < len(trips):
-            removed = trips.pop(idx)
-            date_key = f"{removed.get('year')}-{removed.get('month')}-{removed.get('day')}"
-            price_val = removed.get("price_val", 0)
-            if date_key in data.get("earnings", {}):
-                data["earnings"][date_key] = max(0, data["earnings"][date_key] - price_val)
+            trip = trips.pop(idx)
             
-            save_data(data)
-            bot.send_message(message.chat.id, f"✅ تم إنهاء وحذف الرحلة رقم {idx + 1} بنجاح.")
+            if action == "🟩 إنهاء الرحلة":
+                # إضافة السعر للأرباح اليومية
+                date_key = f"{trip.get('year')}-{trip.get('month')}-{trip.get('day')}"
+                if "earnings" not in data:
+                    data["earnings"] = {}
+                current_earning = data["earnings"].get(date_key, 0)
+                price_val = trip.get("price_val", 0)
+                data["earnings"][date_key] = current_earning + price_val
+                
+                save_data(data)
+                bot.send_message(message.chat.id, f"✅ تم إنهاء الرحلة رقم {idx + 1} بنجاح وإضافتها إلى الأرباح اليومية!")
+            else:
+                # حذف فقط دون إضافة للأرباح
+                save_data(data)
+                bot.send_message(message.chat.id, f"🟥 تم حذف الرحلة رقم {idx + 1} دون إضافتها للأرباح.")
         else:
             bot.send_message(message.chat.id, "❌ رقم الرحلة غير صحيح.")
     except Exception as e:
-        bot.send_message(message.chat.id, "حدث خطأ أثناء حذف الرحلة.")
+        bot.send_message(message.chat.id, "حدث خطأ أثناء معالجة الرحلة.")
     
     show_driver_menu(message.chat.id)
     user_states[message.chat.id] = "logged_in"
@@ -312,17 +314,17 @@ def show_daily_earnings(message):
     markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
     dates_list = list(earnings.keys())
     for idx, date in enumerate(dates_list, 1):
-        markup.add(f"❌ حذف يوم رقم {idx} ({date})")
+        markup.add(f"🗑️ حذف أرباح يوم رقم {idx} ({date})")
     markup.add("🏠 الرئيسية")
     
-    text = "💰 تفاصيل الأرباح اليومية (مع الأرقام للإدارة):\n"
+    text = "💰 تفاصيل الأرباح اليومية (اختر رقم اليوم للحذف أو العودة للرئيسية):\n"
     for idx, (date, amount) in enumerate(earnings.items(), 1):
         text += f"{idx}. 📅 يوم {date} ⟵ المجموع: {amount} DA\n"
         
     bot.send_message(message.chat.id, text, reply_markup=markup)
     user_states[message.chat.id] = "managing_daily_earnings"
 
-@bot.message_handler(func=lambda message: user_states.get(message.chat.id) == "managing_daily_earnings" and message.text.startswith("❌ حذف يوم رقم"))
+@bot.message_handler(func=lambda message: user_states.get(message.chat.id) == "managing_daily_earnings" and message.text.startswith("🗑️ حذف أرباح يوم رقم"))
 def delete_daily_earning(message):
     try:
         part = message.text.split("رقم")[1].strip()
@@ -339,7 +341,7 @@ def delete_daily_earning(message):
         else:
             bot.send_message(message.chat.id, "❌ رقم اليوم غير صحيح.")
     except Exception as e:
-        bot.send_message(message.chat.id, "حدث خطأ أثناء محاولة حذف الأرباح اليومية.")
+        bot.send_message(message.chat.id, "حدث خطأ أثناء محاولة حذف الأرباح.")
         
     show_driver_menu(message.chat.id)
     user_states[message.chat.id] = "logged_in"
