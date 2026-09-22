@@ -7,7 +7,7 @@ from threading import Thread
 import telebot
 
 # إعدادات بوت تلغرام
-TOKEN = '8362647244:AAES_D9iqy-X-Tc0_FlcRh8nSdmmjg5_JLM'
+TOKEN = '8831603087:AAGwmhlHEsGKo1Dg7xlifL2AS5AKJpzufVA'
 bot = telebot.TeleBot(TOKEN)
 
 # إعدادات الاتصال بـ GitHub لحفظ البيانات بشكل دائم
