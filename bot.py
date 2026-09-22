@@ -25,7 +25,7 @@ def keep_alive():
 keep_alive()
 
 # إعدادات بوت تيليجرام
-TOKEN = '8362647244:AAES_D9iqy-X-Tc0_FlcRh8nSdmmjg5_JLM'
+TOKEN = '8512471906:AAHu2e-sR8fwViu40eujYwwWkC2rErE2PAE'
 bot = telebot.TeleBot(TOKEN)
 
 # إعدادات الاتصال بـ GitHub لحفظ البيانات بشكل دائم
