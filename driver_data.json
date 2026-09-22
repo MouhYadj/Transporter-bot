@@ -20,6 +20,16 @@
             "time": "05:30 AM",
             "price": 1700,
             "status": "منتهية"
+        },
+        {
+            "id": 3,
+            "origin": "سطيف",
+            "destination": "اوريسيا",
+            "distance": 15.0,
+            "date": "2025-10-17",
+            "time": "01:50 PM",
+            "price": 550,
+            "status": "غير منتهية"
         }
     ]
 }
