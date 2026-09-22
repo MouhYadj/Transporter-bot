@@ -13,6 +13,19 @@
             "period": "صباحاً (AM)",
             "hour": "01",
             "minute": "00"
+        },
+        {
+            "origin": "العلمة",
+            "destination": "بوعنداس",
+            "distance": "55.0 كم",
+            "price_val": 2000,
+            "price": "2000 DA",
+            "year": "2026",
+            "month": "09",
+            "day": "30",
+            "period": "مساءً (PM)",
+            "hour": "08",
+            "minute": "45"
         }
     ],
     "earnings": {
