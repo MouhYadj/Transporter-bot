@@ -24,7 +24,7 @@ def keep_alive():
 keep_alive()
 
 # ضع هنا الرمز (Token) الخاص بالبوت
-TOKEN = '8362647244:AAES_D9iqy-X-Tc0_FlcRh8nSdmmjg5_JLM'
+TOKEN='8362647244:AAES_D9iqy-X-Tc0_FlcRh8nSdmmjg5_JLM'
 bot = telebot.TeleBot(TOKEN)
 
 # جدول المسافات والأسعار المرجعي
@@ -51,8 +51,11 @@ def load_data():
     return {'logged_in': False, 'trips': []}
 
 def save_data():
-    with open(DATA_FILE, 'w', encoding='utf-8') as f:
-        json.dump(driver_data, f, ensure_ascii=False, indent=4)
+    try:
+        with open(DATA_FILE, 'w', encoding='utf-8') as f:
+            json.dump(driver_data, f, ensure_ascii=False, indent=4)
+    except Exception as e:
+        print(f"Error saving data: {e}")
 
 driver_data = load_data()
 user_states = {}
@@ -573,4 +576,4 @@ def show_driver_menu(chat_id):
     )
 
 print("البوت يعمل الآن...")
-bot.polling(none_stop=True)
+bot.infinity_polling()
