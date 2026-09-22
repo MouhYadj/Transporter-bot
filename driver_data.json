@@ -1,21 +1,8 @@
 {
     "logged_in": true,
-    "trips": [
-        {
-            "origin": "سطيف",
-            "destination": "عين الحجر",
-            "distance": "50.0 كم",
-            "price_val": 1800,
-            "price": "1800 DA",
-            "year": "2026",
-            "month": "09",
-            "day": "26",
-            "period": "صباحاً (AM)",
-            "hour": "08",
-            "minute": "30"
-        }
-    ],
+    "trips": [],
     "earnings": {
-        "2026-12-30": 1800
+        "2026-12-30": 1800,
+        "2026-09-26": 1800
     }
 }
