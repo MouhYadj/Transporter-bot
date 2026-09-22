@@ -198,8 +198,6 @@ def set_hour(message):
 def set_minute(message):
     trip = user_temp_trip[message.chat.id]
     trip["minute"] = message.text
-    time_str = f"{trip['hour']}:{trip['minute']} {trip['period']}"
-    date_str = f"{trip['year']}-{trip['month']}-{trip['day']}"
     
     bot.send_message(message.chat.id, f"💰 أدخل السعر بالدينار الجزائري (مثال: 1700):")
     user_states[message.chat.id] = "choosing_price"
