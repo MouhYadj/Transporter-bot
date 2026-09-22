@@ -2,16 +2,6 @@
     "logged_in": true,
     "trips": [
         {
-            "id": 1,
-            "origin": "سطيف",
-            "destination": "بوعنداس",
-            "distance": 50.0,
-            "date": "2027-10-25",
-            "time": "05:50 PM",
-            "price": 1700,
-            "status": "منتهية"
-        },
-        {
             "id": 2,
             "origin": "سطيف",
             "destination": "بوعنداس",
