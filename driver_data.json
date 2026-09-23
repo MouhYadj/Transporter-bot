@@ -16,19 +16,6 @@
         },
         {
             "origin": "سطيف",
-            "destination": "سطيف",
-            "distance": "50.0 كم",
-            "price_val": 1800,
-            "price": "1800 DA",
-            "year": "2025",
-            "month": "11",
-            "day": "26",
-            "period": "صباحاً (AM)",
-            "hour": "10",
-            "minute": "45"
-        },
-        {
-            "origin": "سطيف",
             "destination": "بوعنداس",
             "distance": "40.0 كم",
             "price_val": 1300,
