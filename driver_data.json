@@ -1,6 +1,20 @@
 {
     "logged_in": true,
-    "trips": [],
+    "trips": [
+        {
+            "origin": "سطيف",
+            "destination": "العلمة",
+            "distance": "35.0 كم",
+            "price_val": 1100,
+            "price": "1100 DA",
+            "year": "2026",
+            "month": "09",
+            "day": "22",
+            "period": "مساءً (PM)",
+            "hour": "08",
+            "minute": "45"
+        }
+    ],
     "earnings": {
         "2026-12-30": 1800,
         "2026-09-26": 1800,
