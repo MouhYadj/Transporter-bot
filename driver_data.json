@@ -1,19 +1,7 @@
 {
     "logged_in": true,
-    "trips": [
-        {
-            "origin": "دلاس",
-            "destination": "عين الشقة",
-            "distance": "3.0 كم",
-            "price_val": 250,
-            "price": "250 DA",
-            "year": "2026",
-            "month": "09",
-            "day": "25",
-            "period": "صباحاً (AM)",
-            "hour": "07",
-            "minute": "30"
-        }
-    ],
-    "earnings": {}
+    "trips": [],
+    "earnings": {
+        "2026-09-25": 250
+    }
 }
