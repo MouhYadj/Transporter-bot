@@ -2,19 +2,6 @@
     "logged_in": true,
     "trips": [
         {
-            "origin": "سطيف",
-            "destination": "بوعنداس",
-            "distance": "18.0 كم",
-            "price_val": 600,
-            "price": "600 DA",
-            "year": "2026",
-            "month": "09",
-            "day": "21",
-            "period": "صباحاً (AM)",
-            "hour": "06",
-            "minute": "15"
-        },
-        {
             "origin": "دلاس",
             "destination": "عين الشقة",
             "distance": "3.0 كم",
