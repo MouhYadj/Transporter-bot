@@ -28,19 +28,6 @@
             "minute": "00"
         },
         {
-            "origin": "14",
-            "destination": "سطيف",
-            "distance": "14.0 كم",
-            "price_val": 500,
-            "price": "500 DA",
-            "year": "2026",
-            "month": "11",
-            "day": "26",
-            "period": "صباحاً (AM)",
-            "hour": "10",
-            "minute": "00"
-        },
-        {
             "origin": "سطيف",
             "destination": "سطيف",
             "distance": "4.0 كم",
