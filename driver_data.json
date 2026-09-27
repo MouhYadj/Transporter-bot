@@ -117,6 +117,19 @@
             "period": "صباحاً (AM)",
             "hour": "01",
             "minute": "00"
+        },
+        {
+            "origin": "سطيف",
+            "destination": "بوعنداس",
+            "distance": "30.0 كم",
+            "price_val": 900,
+            "price": "900 DA",
+            "year": "2026",
+            "month": "09",
+            "day": "27",
+            "period": "مساءً (PM)",
+            "hour": "02",
+            "minute": "45"
         }
     ],
     "earnings": {}
