@@ -2,19 +2,6 @@
     "logged_in": true,
     "trips": [
         {
-            "origin": "سطيف",
-            "destination": "22",
-            "distance": "22.0 كم",
-            "price_val": 700,
-            "price": "700 DA",
-            "year": "2026",
-            "month": "09",
-            "day": "26",
-            "period": "صباحاً (AM)",
-            "hour": "05",
-            "minute": "00"
-        },
-        {
             "origin": "14",
             "destination": "سطيف",
             "distance": "14.0 كم",
