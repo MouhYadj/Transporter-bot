@@ -1,5 +1,19 @@
 {
     "logged_in": true,
-    "trips": [],
+    "trips": [
+        {
+            "origin": "سطيف",
+            "destination": "بوعنداس",
+            "distance": "50.0 كم",
+            "price_val": 1800,
+            "price": "1800 DA",
+            "year": "2026",
+            "month": "10",
+            "day": "01",
+            "period": "صباحاً (AM)",
+            "hour": "02",
+            "minute": "00"
+        }
+    ],
     "earnings": {}
 }
