@@ -1,8 +1,5 @@
 {
     "logged_in": true,
     "trips": [],
-    "earnings": {
-        "2026-10-01": 1800,
-        "2026-01-02": 1800
-    }
+    "earnings": {}
 }
