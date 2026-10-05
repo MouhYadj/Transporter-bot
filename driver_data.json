@@ -1,19 +1,7 @@
 {
     "logged_in": true,
-    "trips": [
-        {
-            "origin": "سطيف",
-            "destination": "راس إسلي",
-            "distance": "55.0 كم",
-            "price_val": 2000,
-            "price": "2000 DA",
-            "year": "2026",
-            "month": "10",
-            "day": "05",
-            "period": "صباحاً (AM)",
-            "hour": "10",
-            "minute": "00"
-        }
-    ],
-    "earnings": {}
+    "trips": [],
+    "earnings": {
+        "2026-10-05": 2000
+    }
 }
