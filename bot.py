@@ -157,6 +157,24 @@ def create_trip_start(message):
     
     markup = telebot.types.InlineKeyboardMarkup()
     markup.add(
+        telebot.types.InlineKeyboardButton("📦 نقل بضائع", callback_data="type_نقل بضائع"),
+        telebot.types.InlineKeyboardButton("🚗 يسير", callback_data="type_يسير")
+    )
+    
+    bot.send_message(message.chat.id, "🏷️ حدد نوع الرحلة:", reply_markup=markup)
+    user_states[message.chat.id] = "choosing_type_inline"
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith("type_"))
+def callback_type(call):
+    chat_id = call.message.chat.id
+    val = call.data.replace("type_", "")
+    user_temp_trip[chat_id] = {"trip_type": val}
+    ask_origin(chat_id)
+    bot.answer_callback_query(call.id)
+
+def ask_origin(chat_id):
+    markup = telebot.types.InlineKeyboardMarkup()
+    markup.add(
         telebot.types.InlineKeyboardButton("سطيف", callback_data="orig_سطيف"),
         telebot.types.InlineKeyboardButton("العلمة", callback_data="orig_العلمة")
     )
@@ -165,9 +183,8 @@ def create_trip_start(message):
         telebot.types.InlineKeyboardButton("بوعنداس", callback_data="orig_بوعنداس")
     )
     markup.add(telebot.types.InlineKeyboardButton("✍️ كتابة مكان آخر", callback_data="orig_custom"))
-    
-    bot.send_message(message.chat.id, "📍 اختر مكان الانطلاق:", reply_markup=markup)
-    user_states[message.chat.id] = "choosing_origin_inline"
+    bot.send_message(chat_id, "📍 اختر مكان الانطلاق:", reply_markup=markup)
+    user_states[chat_id] = "choosing_origin_inline"
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith("orig_"))
 def callback_origin(call):
@@ -178,13 +195,13 @@ def callback_origin(call):
         bot.send_message(chat_id, "✍️ اكتب مكان الانطلاق بيدك في المحادثة:")
         user_states[chat_id] = "choosing_origin_text"
     else:
-        user_temp_trip[chat_id] = {"origin": val}
+        user_temp_trip[chat_id]["origin"] = val
         ask_destination(chat_id)
     bot.answer_callback_query(call.id)
 
 @bot.message_handler(func=lambda message: user_states.get(message.chat.id) == "choosing_origin_text")
 def set_origin_text(message):
-    user_temp_trip[message.chat.id] = {"origin": message.text}
+    user_temp_trip[message.chat.id]["origin"] = message.text
     ask_destination(message.chat.id)
 
 def ask_destination(chat_id):
@@ -211,20 +228,48 @@ def callback_destination(call):
         user_states[chat_id] = "choosing_destination_text"
     else:
         user_temp_trip[chat_id]["destination"] = val
-        ask_distance_method(chat_id)
+        ask_price_or_distance(chat_id)
     bot.answer_callback_query(call.id)
 
 @bot.message_handler(func=lambda message: user_states.get(message.chat.id) == "choosing_destination_text")
 def set_destination_text(message):
     user_temp_trip[message.chat.id]["destination"] = message.text
-    ask_distance_method(message.chat.id)
+    ask_price_or_distance(message.chat.id)
 
-def ask_distance_method(chat_id):
+def ask_price_or_distance(chat_id):
     markup = telebot.types.InlineKeyboardMarkup()
-    markup.add(telebot.types.InlineKeyboardButton("نعم (اعتمد 50 كم)", callback_data="dist_50"))
-    markup.add(telebot.types.InlineKeyboardButton("إدخال مسافة أخرى بالكيلومتر", callback_data="dist_custom"))
-    bot.send_message(chat_id, "📏 المسافة المعتمدة هي 50 كم. هل تريد اعتمادها أم إدخال مسافة أخرى؟", reply_markup=markup)
-    user_states[chat_id] = "choosing_distance_inline"
+    markup.add(telebot.types.InlineKeyboardButton("💰 كتابة الثمن مباشرة", callback_data="method_direct_price"))
+    markup.add(telebot.types.InlineKeyboardButton("📏 حساب الثمن عبر المسافة (كم)", callback_data="method_distance"))
+    bot.send_message(chat_id, "💵 كيف تريد تحديد السعر لهذه الرحلة؟", reply_markup=markup)
+    user_states[chat_id] = "choosing_method_inline"
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith("method_"))
+def callback_method(call):
+    chat_id = call.message.chat.id
+    val = call.data.replace("method_", "")
+    
+    if val == "direct_price":
+        bot.send_message(chat_id, "✍️ اكتب الثمن مباشرة بالدينار الجزائري (مثال: 1500):")
+        user_states[chat_id] = "choosing_custom_price"
+    else:
+        markup = telebot.types.InlineKeyboardMarkup()
+        markup.add(telebot.types.InlineKeyboardButton("نعم (اعتمد 50 كم)", callback_data="dist_50"))
+        markup.add(telebot.types.InlineKeyboardButton("إدخال مسافة أخرى بالكيلومتر", callback_data="dist_custom"))
+        bot.send_message(chat_id, "📏 المسافة المعتمدة هي 50 كم. هل تريد اعتمادها أم إدخال مسافة أخرى؟", reply_markup=markup)
+        user_states[chat_id] = "choosing_distance_inline"
+    bot.answer_callback_query(call.id)
+
+@bot.message_handler(func=lambda message: user_states.get(message.chat.id) == "choosing_custom_price")
+def set_custom_price(message):
+    try:
+        price_val = int(message.text.replace("DA", "").strip())
+        chat_id = message.chat.id
+        user_temp_trip[chat_id]["distance"] = "محدد يدوياً"
+        user_temp_trip[chat_id]["price_val"] = price_val
+        user_temp_trip[chat_id]["price"] = f"{price_val} DA"
+        ask_year(chat_id)
+    except ValueError:
+        bot.send_message(message.chat.id, "❌ يرجى كتابة رقم صحيح للسعر:")
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith("dist_"))
 def callback_distance(call):
@@ -251,8 +296,9 @@ def process_distance(chat_id, distance_val):
     price = calculate_price(distance_val)
     user_temp_trip[chat_id]["price_val"] = price
     user_temp_trip[chat_id]["price"] = f"{price} DA"
-    
-    # الانتقال لخطوة اختيار السنة
+    ask_year(chat_id)
+
+def ask_year(chat_id):
     markup = telebot.types.InlineKeyboardMarkup()
     markup.add(
         telebot.types.InlineKeyboardButton("2025", callback_data="year_2025"),
@@ -268,7 +314,6 @@ def callback_year(call):
     year = call.data.replace("year_", "")
     user_temp_trip[chat_id]["year"] = year
     
-    # اختيار الشهر
     markup = telebot.types.InlineKeyboardMarkup()
     months = [("جانفي (01)", "01"), ("فيفري (02)", "02"), ("مارس (03)", "03"), ("أفريل (04)", "04"),
               ("ماي (05)", "05"), ("جوان (06)", "06"), ("جويليا (07)", "07"), ("أوت (08)", "08"),
@@ -292,7 +337,6 @@ def callback_month(call):
     year = int(user_temp_trip[chat_id]["year"])
     max_days = get_days_in_month(year, int(month))
     
-    # اختيار اليوم حسب عدد أيام الشهر بدقة
     markup = telebot.types.InlineKeyboardMarkup(row_width=6)
     day_buttons = [telebot.types.InlineKeyboardButton(str(d), callback_data=f"day_{d:02d}") for d in range(1, max_days + 1)]
     markup.add(*day_buttons)
@@ -307,7 +351,6 @@ def callback_day(call):
     day = call.data.replace("day_", "")
     user_temp_trip[chat_id]["day"] = day
     
-    # اختيار الوقت (صباحاً / مساءً)
     markup = telebot.types.InlineKeyboardMarkup()
     markup.add(
         telebot.types.InlineKeyboardButton("☀️ صباحاً (AM)", callback_data="period_صباحاً (AM)"),
@@ -323,7 +366,6 @@ def callback_period(call):
     period = call.data.replace("period_", "")
     user_temp_trip[chat_id]["period"] = period
     
-    # اختيار الساعة من 1 إلى 12
     markup = telebot.types.InlineKeyboardMarkup(row_width=4)
     hour_buttons = [telebot.types.InlineKeyboardButton(f"{h:02d}", callback_data=f"hour_{h:02d}") for h in range(1, 13)]
     markup.add(*hour_buttons)
@@ -338,7 +380,6 @@ def callback_hour(call):
     hour = call.data.replace("hour_", "")
     user_temp_trip[chat_id]["hour"] = hour
     
-    # اختيار الدقائق
     markup = telebot.types.InlineKeyboardMarkup(row_width=3)
     markup.add(
         telebot.types.InlineKeyboardButton("00", callback_data="min_00"),
@@ -358,7 +399,6 @@ def callback_minute(call):
     trip = user_temp_trip[chat_id]
     trip["minute"] = minute
     
-    # حفظ الرحلة بالكامل
     data = load_data()
     data["trips"].append(trip)
     save_data(data)
@@ -369,9 +409,10 @@ def callback_minute(call):
     bot.send_message(
         chat_id, 
         f"✅ تم إنشاء وحفظ الرحلة بنجاح!\n"
+        f"- نوع الرحلة: {trip.get('trip_type', 'نقل بضائع')}\n"
         f"- المسار: من {trip['origin']} إلى {trip['destination']}\n"
         f"- المسافة: {trip['distance']}\n"
-        f"- السعر: {trip['price']}\n"
+        f"- الثمن: {trip['price']}\n"
         f"- التاريخ: {date_str} على الساعة {time_str}", 
         reply_markup=get_driver_markup()
     )
@@ -395,7 +436,9 @@ def show_trips(message):
     text = "📋 قائمة الرحلات المتوفرة:\n"
     markup = telebot.types.InlineKeyboardMarkup()
     for idx, trip in enumerate(trips, 1):
-        text += f"{idx}. من {trip.get('origin')} إلى {trip.get('destination')} | {trip.get('distance')} | {trip.get('price')}\n"
+        t_type = trip.get('trip_type', 'نقل بضائع')
+        date_str = f"{trip.get('year')}-{trip.get('month')}-{trip.get('day')}"
+        text += f"{idx}. رحلة [{t_type}] في يوم {date_str} | من {trip.get('origin')} إلى {trip.get('destination')} | {trip.get('price')}\n"
         markup.add(
             telebot.types.InlineKeyboardButton(f"🟩 إنهاء {idx}", callback_data=f"trip_finish_{idx-1}"),
             telebot.types.InlineKeyboardButton(f"🟥 حذف {idx}", callback_data=f"trip_delete_{idx-1}")
@@ -423,7 +466,10 @@ def callback_trip_action(call):
             price_val = trip.get("price_val", 0)
             data["earnings"][date_key] = current_earning + price_val
             save_data(data)
-            bot.send_message(chat_id, f"🟩 تم إنهاء الرحلة رقم {idx + 1} وإضافتها للأرباح اليومية!")
+            t_type = trip.get('trip_type', 'نقل بضائع')
+            date_str = f"{trip.get('year')}-{trip.get('month')}-{trip.get('day')}"
+            price_str = trip.get('price', '')
+            bot.send_message(chat_id, f"🟩 تم إنهاء رحلة [{t_type}] ليوم {date_str} بثمن {price_str} وإضافتها للأرباح اليومية بنجاح!")
         else:
             save_data(data)
             bot.send_message(chat_id, f"🟥 تم حذف الرحلة رقم {idx + 1} دون إضافتها للأرباح.")
@@ -540,10 +586,10 @@ def execute_reset_earnings(message):
         data["earnings"] = {}
         save_data(data)
         bot.send_message(chat_id, "🗑️ تم تصفير جميع الأرباح اليومية بنجاح.", reply_markup=get_driver_markup())
-        user_states[message.chat.id] = "logged_in"
+        user_states[chat_id] = "logged_in"
     else:
-        bot.send_message(chat_id, "❌ الرقم السري غير صحيح. تم إلغاء التصفير.", reply_markup=get_driver_markup())
-        user_states[message.chat.id] = "logged_in"
+        bot.send_message(message.chat.id, "❌ الرقم السري غير صحيح. تم إلغاء التصفير.", reply_markup=get_driver_markup())
+        user_states[chat_id] = "logged_in"
 
 app = Flask('')
 
