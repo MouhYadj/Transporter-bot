@@ -1,5 +1,20 @@
 {
     "logged_in": true,
-    "trips": [],
+    "trips": [
+        {
+            "trip_type": "يسير",
+            "origin": "سطيف",
+            "destination": "سطيف",
+            "distance": "محدد يدوياً",
+            "price_val": 400,
+            "price": "400 DA",
+            "year": "2026",
+            "month": "10",
+            "day": "10",
+            "period": "صباحاً (AM)",
+            "hour": "11",
+            "minute": "45"
+        }
+    ],
     "earnings": {}
 }
