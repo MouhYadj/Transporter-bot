@@ -1,20 +1,12 @@
 {
     "logged_in": true,
-    "trips": [
-        {
-            "trip_type": "يسير",
-            "origin": "سطيف",
-            "destination": "سطيف",
-            "distance": "محدد يدوياً",
-            "price_val": 350,
-            "price": "350 DA",
-            "year": "2026",
-            "month": "10",
-            "day": "10",
-            "period": "مساءً (PM)",
-            "hour": "07",
-            "minute": "30"
+    "trips": [],
+    "earnings": {
+        "2026-10-10": {
+            "total": 350,
+            "details": [
+                "رحلة [يسير] من سطيف إلى سطيف | الثمن: 350 DA | الوقت: 07:30 مساءً (PM)"
+            ]
         }
-    ],
-    "earnings": {}
+    }
 }
