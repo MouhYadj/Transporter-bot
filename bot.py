@@ -216,7 +216,7 @@ def ask_destination(chat_id):
     )
     markup.add(telebot.types.InlineKeyboardButton("✍️ كتابة مكان آخر", callback_data="dest_custom"))
     bot.send_message(chat_id, "📍 اختر مكان الوصول (الوجهة):", reply_markup=markup)
-    user_states[chat_id] = "choosing_destination_inline"
+    user_states[message.chat.id] = "choosing_destination_inline"
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith("dest_"))
 def callback_destination(call):
@@ -411,7 +411,6 @@ def callback_minute(call):
         f"✅ تم إنشاء وحفظ الرحلة بنجاح!\n"
         f"- نوع الرحلة: {trip.get('trip_type', 'نقل بضائع')}\n"
         f"- المسار: من {trip['origin']} إلى {trip['destination']}\n"
-        f"- المسافة: {trip['distance']}\n"
         f"- الثمن: {trip['price']}\n"
         f"- التاريخ: {date_str} على الساعة {time_str}", 
         reply_markup=get_driver_markup()
@@ -462,14 +461,24 @@ def callback_trip_action(call):
             date_key = f"{trip.get('year')}-{trip.get('month')}-{trip.get('day')}"
             if "earnings" not in data:
                 data["earnings"] = {}
-            current_earning = data["earnings"].get(date_key, 0)
+            if date_key not in data["earnings"]:
+                data["earnings"][date_key] = {"total": 0, "details": []}
+            elif isinstance(data["earnings"][date_key], (int, float)):
+                # تحويل النظام القديم إلى النظام المفصل الجديد إن وجد
+                old_val = data["earnings"][date_key]
+                data["earnings"][date_key] = {"total": old_val, "details": []}
+                
             price_val = trip.get("price_val", 0)
-            data["earnings"][date_key] = current_earning + price_val
-            save_data(data)
+            data["earnings"][date_key]["total"] += price_val
+            
+            # حفظ تفاصيل الرحلة في الأرباح اليومية
             t_type = trip.get('trip_type', 'نقل بضائع')
-            date_str = f"{trip.get('year')}-{trip.get('month')}-{trip.get('day')}"
-            price_str = trip.get('price', '')
-            bot.send_message(chat_id, f"🟩 تم إنهاء رحلة [{t_type}] ليوم {date_str} بثمن {price_str} وإضافتها للأرباح اليومية بنجاح!")
+            time_str = f"{trip.get('hour', '00')}:{trip.get('minute', '00')} {trip.get('period', '')}"
+            detail_str = f"رحلة [{t_type}] من {trip.get('origin')} إلى {trip.get('destination')} | الثمن: {trip.get('price')} | الوقت: {time_str}"
+            data["earnings"][date_key]["details"].append(detail_str)
+            
+            save_data(data)
+            bot.send_message(chat_id, f"🟩 تم إنهاء رحلة [{t_type}] وإضافتها لتفاصيل الأرباح اليومية بنجاح!")
         else:
             save_data(data)
             bot.send_message(chat_id, f"🟥 تم حذف الرحلة رقم {idx + 1} دون إضافتها للأرباح.")
@@ -478,7 +487,7 @@ def callback_trip_action(call):
     bot.answer_callback_query(call.id)
     show_trips(call.message)
 
-# --- إدارة الأرباح اليومية ---
+# --- إدارة الأرباح اليومية (مفصلة) ---
 @bot.message_handler(func=lambda message: message.text == "💰 الأرباح اليومية")
 def show_daily_earnings(message):
     if user_states.get(message.chat.id) != "logged_in":
@@ -492,8 +501,22 @@ def show_daily_earnings(message):
     
     text = "💰 تفاصيل الأرباح اليومية:\n"
     markup = telebot.types.InlineKeyboardMarkup()
-    for idx, (date, amount) in enumerate(earnings.items(), 1):
-        text += f"{idx}. 📅 يوم {date} ⟵ المجموع: {amount} DA\n"
+    
+    for date, val in earnings.items():
+        if isinstance(val, (int, float)):
+            total = val
+            details = []
+        else:
+            total = val.get("total", 0)
+            details = val.get("details", [])
+            
+        text += f"\n📅 يوم {date} ⟵ المجموع الإجمالي: {total} DA\n"
+        if details:
+            for d in details:
+                text += f"   • {d}\n"
+        else:
+            text += "   • (لا توجد تفاصيل مسجلة)\n"
+            
         markup.add(telebot.types.InlineKeyboardButton(f"🗑️ حذف أرباح يوم {date}", callback_data=f"earn_del_{date}"))
         
     bot.send_message(message.chat.id, text, reply_markup=markup)
@@ -535,12 +558,13 @@ def show_monthly_earnings(message):
     
     monthly = {}
     monthly_details = {}
-    for date, amount in earnings.items():
+    for date, val in earnings.items():
+        total = val if isinstance(val, (int, float)) else val.get("total", 0)
         month_key = date[:7] 
-        monthly[month_key] = monthly.get(month_key, 0) + amount
+        monthly[month_key] = monthly.get(month_key, 0) + total
         if month_key not in monthly_details:
             monthly_details[month_key] = []
-        monthly_details[month_key].append(f"📅 يوم {date}: {amount} DA")
+        monthly_details[month_key].append(f"📅 يوم {date}: {total} DA")
         
     text = "📊 ملخص الأرباح الشهرية مع التفاصيل:\n"
     for month, amount in monthly.items():
@@ -561,9 +585,10 @@ def show_yearly_earnings(message):
         return
     
     yearly = {}
-    for date, amount in earnings.items():
+    for date, val in earnings.items():
+        total = val if isinstance(val, (int, float)) else val.get("total", 0)
         year_key = date[:4] 
-        yearly[year_key] = yearly.get(year_key, 0) + amount
+        yearly[year_key] = yearly.get(year_key, 0) + total
         
     text = "📈 ملخص الأرباح السنوية:\n"
     for year, amount in yearly.items():
@@ -588,7 +613,7 @@ def execute_reset_earnings(message):
         bot.send_message(chat_id, "🗑️ تم تصفير جميع الأرباح اليومية بنجاح.", reply_markup=get_driver_markup())
         user_states[chat_id] = "logged_in"
     else:
-        bot.send_message(message.chat.id, "❌ الرقم السري غير صحيح. تم إلغاء التصفير.", reply_markup=get_driver_markup())
+        bot.send_message(chat_id, "❌ الرقم السري غير صحيح. تم إلغاء التصفير.", reply_markup=get_driver_markup())
         user_states[chat_id] = "logged_in"
 
 app = Flask('')
