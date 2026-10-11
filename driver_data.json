@@ -28,6 +28,20 @@
             "period": "صباحاً (AM)",
             "hour": "08",
             "minute": "00"
+        },
+        {
+            "trip_type": "يسير",
+            "origin": "سطيف",
+            "destination": "سطيف",
+            "distance": "محدد يدوياً",
+            "price_val": 40,
+            "price": "40 DA",
+            "year": "2026",
+            "month": "10",
+            "day": "11",
+            "period": "صباحاً (AM)",
+            "hour": "08",
+            "minute": "15"
         }
     ],
     "earnings": {}
