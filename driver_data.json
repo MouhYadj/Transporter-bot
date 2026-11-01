@@ -42,6 +42,20 @@
             "period": "صباحاً (AM)",
             "hour": "06",
             "minute": "15"
+        },
+        {
+            "trip_type": "نقل بضائع",
+            "origin": "سطيف",
+            "destination": "سطيف",
+            "distance": "محدد يدوياً",
+            "price_val": 2000,
+            "price": "2000 DA",
+            "year": "2026",
+            "month": "10",
+            "day": "29",
+            "period": "صباحاً (AM)",
+            "hour": "07",
+            "minute": "30"
         }
     ],
     "earnings": {
